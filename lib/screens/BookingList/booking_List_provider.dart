@@ -1,0 +1,48 @@
+import 'dart:developer';
+import 'package:bookevent/core/CustomeDateFormat.dart';
+import 'package:flutter/material.dart';
+import 'booking_List_repo.dart';
+
+class BookingListProvider extends ChangeNotifier {
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+  List<Map<String, dynamic>> eventList = [];
+  DateTime get focusedDay => _focusedDay;
+  DateTime? get selectedDay => _selectedDay;
+
+  BookingListProvider() {
+    setSelectedDay(DateTime.now());
+  }
+
+  void setSelectedDay(DateTime selectedDay) async {
+    _selectedDay = selectedDay;
+    try {
+      var response = await BookingListRepo().eventList(
+          CustomDateFormat().formattedDate(DateTime.now()),
+          CustomDateFormat().formattedDate(_selectedDay!));
+      var sampleFavoriteList =
+          List<Map<String, dynamic>>.from(response['data']);
+      eventList =
+          sampleFavoriteList.where((x) => x['is_booked'] == true).toList();
+    } catch (e) {
+      log('Error fetching events: $e');
+    }
+    notifyListeners();
+  }
+
+  void setFocusedDay(DateTime focusedDay) {
+    _focusedDay = focusedDay;
+    log('Focused: $_focusedDay');
+    notifyListeners();
+  }
+
+  void toggleBooked(int index) {
+    eventList[index]['isBooked'] = !eventList[index]['isBooked'];
+    notifyListeners();
+  }
+
+  void toggleFavorite(int index) {
+    eventList[index]['isFavorited'] = !eventList[index]['isFavorited'];
+    notifyListeners();
+  }
+}
